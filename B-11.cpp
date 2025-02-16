@@ -95,33 +95,52 @@ bool bst::update(string key, string value) {
 }
 
 bool bst::delete_key(string key) {
-    node **cur = &root;
-    while (*cur != nullptr) {
-        if ((*cur)->key == key) {
-            node *temp = *cur;
-            if (temp->left == nullptr)
-                *cur = temp->right;
-            else if (temp->right == nullptr)
-                *cur = temp->left;
-            else {
-                node *successor = temp->right;
-                while (successor->left != nullptr)
-                    successor = successor->left;
-                temp->key = successor->key;
-                temp->value = successor->value;
-                cur = &temp->right;
-                key = successor->key;
-                continue;
-            }
-            delete temp;
-            return true;
-        } else if ((*cur)->key < key)
-            cur = &((*cur)->right);
+    node* parent = nullptr; node* cur = root;
+   
+    while (cur != nullptr && cur->key != key) {
+        parent = cur;
+        if (key < cur->key)
+            cur = cur->left;
         else
-            cur = &((*cur)->left);
+            cur = cur->right;
     }
-    return false;
+
+    if (cur == nullptr) return false;
+
+    // Case 1: Node with only one child or no child
+    if (cur->left == nullptr || cur->right == nullptr) {
+        node* child = (cur->left) ? cur->left : cur->right;
+        if (parent == nullptr)
+            root = child;
+        else if (parent->left == cur)
+            parent->left = child;
+        else
+            parent->right = child;
+        delete cur;
+    }
+    // Case 2: Node with two children
+    else {
+        node* successor = cur->right;
+        node* successor_parent = cur;
+        // Find in-order successor
+        while (successor->left != nullptr) {
+            successor_parent = successor;
+            successor = successor->left;
+        }
+        // Copy successor data to current node
+        cur->key = successor->key;
+        cur->value = successor->value;
+       
+        // Delete the successor
+        if (successor_parent->left == successor)
+            successor_parent->left = successor->right;
+        else
+            successor_parent->right = successor->right;
+        delete successor;
+    }
+    return true;
 }
+
 
 void bst::display(node *cur) {
     if (cur == NULL) {
